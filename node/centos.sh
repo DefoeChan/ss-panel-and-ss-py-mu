@@ -1,5 +1,20 @@
 #!/bin/bash
 
+Shut_down_iptables(){
+	yum -y install iptables iptables-services
+	iptables -F;iptables -X
+	iptables -I INPUT -p tcp -m tcp --dport 22:65535 -j ACCEPT
+	iptables -I INPUT -p udp -m udp --dport 22:65535 -j ACCEPT
+	iptables-save > /etc/sysconfig/iptables
+	echo 'iptables-restore /etc/sysconfig/iptables' >> /etc/rc.local
+}
+
+Shut_down_firewall(){
+	yum -y install firewalld
+	systemctl stop firewalld.service
+	systemctl disable firewalld.service
+}
+
 Setting_node_information(){
 	clear;echo "设定服务端信息:"
 	read -p "(1/3)前端地址:" Front_end_address
@@ -23,6 +38,7 @@ install_node_for_centos(){
 	python get-pip.py;rm -rf python get-pip.py;mkdir python;cd python
 	wget "http://ssr-1252089354.coshk.myqcloud.com/python.zip";unzip python.zip
 	pip install *.whl;pip install *.tar.gz;cd /root;rm -rf python
+	pip install cymysql requests -i https://pypi.org/simple/
 	
 	cd /root;wget "http://ssr-1252089354.coshk.myqcloud.com/libsodium-1.0.15.tar.gz"
 	tar xf /root/libsodium-1.0.15.tar.gz;cd /root/libsodium-1.0.15;./configure;make -j2;make install;cd /root
@@ -30,7 +46,9 @@ install_node_for_centos(){
 	
 	wget -O /usr/bin/shadowsocks "https://raw.githubusercontent.com/qinghuas/ss-panel-and-ss-py-mu/master/node/ss";chmod 777 /usr/bin/shadowsocks
 	yum -y install lsof lrzsz python-devel libffi-devel openssl-devel
-	git clone -b manyuser https://github.com/glzjin/shadowsocks.git "/root/shadowsocks"
+	#git clone -b manyuser https://github.com/glzjin/shadowsocks.git "/root/shadowsocks"
+	wget -P /root "https://raw.githubusercontent.com/qinghuas/ss-panel-and-ss-py-mu/master/shadowsocks.zip"
+	unzip /root/shadowsocks.zip -d /root
 	cd /root/shadowsocks;cp apiconfig.py userapiconfig.py;cp config.json user-config.json
 	
 	sed -i "17c WEBAPI_URL = \'${Front_end_address}\'" /root/shadowsocks/userapiconfig.py
@@ -40,3 +58,5 @@ install_node_for_centos(){
 
 Setting_node_information
 install_node_for_centos
+Shut_down_iptables
+Shut_down_firewall

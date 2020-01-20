@@ -1,5 +1,14 @@
 #!/bin/bash
 
+Shut_down_iptables(){
+	apt-get -y install iptables iptables-services
+	iptables -F;iptables -X
+	iptables -I INPUT -p tcp -m tcp --dport 22:65535 -j ACCEPT
+	iptables -I INPUT -p udp -m udp --dport 22:65535 -j ACCEPT
+	iptables-save > /etc/sysconfig/iptables
+	echo 'iptables-restore /etc/sysconfig/iptables' >> /etc/rc.local
+}
+
 Setting_node_information(){
 	clear;echo "设定服务端信息:"
 	read -p "(1/3)前端地址:" Front_end_address
@@ -23,7 +32,9 @@ install_node_for_debian(){
 	
 	pip install cymysql requests -i https://pypi.org/simple/
 	wget -O /usr/bin/shadowsocks "https://raw.githubusercontent.com/qinghuas/ss-panel-and-ss-py-mu/master/node/ss";chmod 777 /usr/bin/shadowsocks
-	git clone -b manyuser https://github.com/glzjin/shadowsocks.git "/root/shadowsocks"
+	#git clone -b manyuser https://github.com/glzjin/shadowsocks.git "/root/shadowsocks"
+	wget -P /root "https://raw.githubusercontent.com/qinghuas/ss-panel-and-ss-py-mu/master/shadowsocks.zip"
+	unzip /root/shadowsocks.zip -d /root
 	cd shadowsocks;chmod +x *.sh;pip install -r requirements.txt -i https://pypi.org/simple/
 	cp apiconfig.py userapiconfig.py;cp config.json user-config.json
 	
@@ -34,3 +45,4 @@ install_node_for_debian(){
 
 Setting_node_information
 install_node_for_debian
+Shut_down_iptables
